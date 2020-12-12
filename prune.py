@@ -5,15 +5,15 @@ import torch
 import torch.optim as optim
 from torchvision import datasets, transforms
 
-from cifar_classifier import MaskedCifar
-from classifier import Classifier
-from mnist_classifier import MaskedMNist
+#from cifar_classifier import MaskedCifar
+#from classifier import Classifier
+#from mnist_classifier import MaskedMNist
 from pruning.methods import weight_prune, prune_rate, get_all_weights, quantize_k_means
 from pruning.utils import to_var
-from resnet import MaskedResNet18, MaskedResNet34, MaskedResNet50, MaskedResNet101, MaskedResNet152
+#from resnet import MaskedResNet18, MaskedResNet34, MaskedResNet50, MaskedResNet101, MaskedResNet152
 from classifier_utils import setup_default_args
 from yolov3 import LoadImagesAndLabels, YoloWrapper
-from fasterrcnn.wrapper import FasterRCNNWrapper
+#from fasterrcnn.wrapper import FasterRCNNWrapper
 
 from torch.utils.tensorboard import SummaryWriter
 from configurations import configurations
@@ -38,7 +38,7 @@ def yolo_config(config, args):
     #     print("WARNING: Prune threshold seems too large.")
     #     if input("Input y if you are sure you want to continue.") != 'y': return
 
-    device = 'cpu' if args.no_cuda else 'cuda:1'
+    device = 'cpu' if args.no_cuda else 'cuda:0'
     model = config['model'](config['config_path'], device=device)
     wrapper = YoloWrapper(device, model)
     lr0 = 0.001
@@ -51,8 +51,7 @@ def yolo_config(config, args):
     val_dataloader = LoadImagesAndLabels(config['datasets']['test'], batch_size=args.batch_size, img_size=config['image_size'])
 
     if (args.pretrained_weights):
-        print("Loading pretrained weights..")
-        model.load_state_dict(torch.load(args.pretrained_weights, map_location=torch.device(device))['model'])
+        model.load_state_dict(torch.load(args.pretrained_weights, map_location=torch.device(device)))
     else:
         wrapper.train(train_dataloader, val_dataloader, args.epochs, optimizer, lr0)
 
@@ -72,11 +71,13 @@ def yolo_config(config, args):
                 writer.add_histogram(f'prune/preprune/{name}', param, prune_iter)
 
     thresh_reached, _ = reached_threshold(args.prune_threshold, curr_mAP, pre_prune_mAP)
-    while not thresh_reached:
+    while (not thresh_reached) and (prune_iter < 2):
         prune_iter += 1
         prune_perc += 5.
         masks = weight_prune(model, prune_perc)
         model.set_mask(masks)
+
+        print(f"Just pruned with prune_perc={prune_perc}, now has {prune_rate(model, verbose=False)}% zeros")
 
         if not args.no_retrain:
             print(f"Retraining at prune percentage {prune_perc}..")
@@ -84,6 +85,8 @@ def yolo_config(config, args):
 
             print("Loading best weights from training epochs..")
             model.load_state_dict(best_weights)
+
+            print(f"Just finished training with prune_perc={prune_perc}, now has {prune_rate(model, verbose=False)}% zeros")
         else:
             with torch.no_grad():
                 curr_mAP, _, _ = wrapper.test(val_dataloader, img_size=config['image_size'], batch_size=args.batch_size)
@@ -100,8 +103,9 @@ def yolo_config(config, args):
     prune_perc = prune_rate(model)
 
     if (args.save_model):
-        torch.save(model.state_dict(), f'{config["name"]}-pruned-{datetime.datetime.now().strftime("%Y%m%d%H%M")}.pt')
-    
+        #torch.save(model.state_dict(), f'{config["name"]}-pruned-{datetime.datetime.now().strftime("%Y%m%d%H%M")}.pt')
+        torch.save(model.state_dict(), "YOLOv3-prune-perc-" + str(prune_perc) + ".pt")
+
     if args.tensorboard:
         for name, param in wrapper.model.named_parameters():
             if 'weight' in name:

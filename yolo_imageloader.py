@@ -32,6 +32,9 @@ class LoadImagesAndLabels:  # for training
             self.img_files = [x.replace('\n', '') for x in self.img_files]
             self.img_files = list(filter(lambda x: len(x) > 0, self.img_files))
 
+        #rando_indices = np.random.permutation(min(64, len(self.img_files)))
+        #self.img_files = np.array(self.img_files)[rando_indices]
+
         self.label_files = [x.replace('images', 'labels').replace('.png', '.txt').replace('.jpg', '.txt')
                             for x in self.img_files]
 

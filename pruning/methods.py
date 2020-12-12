@@ -43,7 +43,7 @@ def gen_masks_recursive(model, threshold, layerwise_thresh=False):
     
     for module in model.children():
         if 'Masked' not in str(type(module)):
-            print("Skipping masking of layer: ", module)
+            #print("Skipping masking of layer: ", module)
             continue
         if len(list(module.children())) != 0:
             masks.append(gen_masks_recursive(module, threshold, layerwise_thresh=layerwise_thresh))
