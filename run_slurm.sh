@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=model_compression
+#SBATCH --job-name=gate-training-pruning
 #SBATCH --account=robosub_team
 #SBATCH --partition=gpu
 #SBATCH --gpus=1
@@ -10,4 +10,4 @@
 #SBATCH --mem=16gb
 #SBATCH --mail-type=ALL
 source venv/bin/activate
-python prune.py --config YOLOv3 --pretrained-weights YOLOv3-prune-perc-29.866345702343708.pt --save-model --batch-size 16 --start-at-prune-rate 30
+python prune.py --config YOLOv3 --epochs 160 --batch-size 16 --save-model

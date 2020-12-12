@@ -121,3 +121,7 @@ data/
 runs/
 coco/
 output/
+
+# PyTorch weights
+*.pt
+*/*.pt

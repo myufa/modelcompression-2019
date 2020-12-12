@@ -74,9 +74,9 @@ configurations = [
         'config_path': './yolo.cfg',
         'image_size': 416,
         'datasets': {
-            'train': '/scratch/robosub_team_root/robosub_team/bdmanley/modelcompression-2019/data/coco/trainvalno5k.txt',
-            'test': '/scratch/robosub_team_root/robosub_team/bdmanley/modelcompression-2019/data/coco/5k.txt',
-            'val': '/scratch/robosub_team_root/robosub_team/bdmanley/modelcompression-2019/data/coco/trainvalno5k.txt',
+            'train': './train.txt',
+            'test': './validate.txt',
+            'val': './train.txt',
         },
         'optimizer': optim.SGD
     },

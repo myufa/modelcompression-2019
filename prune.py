@@ -54,6 +54,7 @@ def yolo_config(config, args):
         model.load_state_dict(torch.load(args.pretrained_weights, map_location=torch.device(device)))
     else:
         wrapper.train(train_dataloader, val_dataloader, args.epochs, optimizer, lr0)
+        torch.save(model.state_dict(), "YOLOv3-gate-prepruned.pt")
 
     with torch.no_grad():
         pre_prune_mAP, _, _  = wrapper.test(val_dataloader, img_size=config['image_size'], batch_size=args.batch_size)
@@ -71,7 +72,7 @@ def yolo_config(config, args):
                 writer.add_histogram(f'prune/preprune/{name}', param, prune_iter)
 
     thresh_reached, _ = reached_threshold(args.prune_threshold, curr_mAP, pre_prune_mAP)
-    while (not thresh_reached) and (prune_iter < 2):
+    while (not thresh_reached):
         prune_iter += 1
         prune_perc += 5.
         masks = weight_prune(model, prune_perc)
@@ -104,7 +105,8 @@ def yolo_config(config, args):
 
     if (args.save_model):
         #torch.save(model.state_dict(), f'{config["name"]}-pruned-{datetime.datetime.now().strftime("%Y%m%d%H%M")}.pt')
-        torch.save(model.state_dict(), "YOLOv3-prune-perc-" + str(prune_perc) + ".pt")
+        #torch.save(model.state_dict(), "YOLOv3-prune-perc-" + str(prune_perc) + ".pt")
+        torch.save(model.state_dict(), "YOLOv3-gate-pruned-modelcompression.pt")
 
     if args.tensorboard:
         for name, param in wrapper.model.named_parameters():
